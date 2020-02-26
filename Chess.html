@@ -369,25 +369,29 @@ summary {
 </div>
 
 
-<pre class="r"><code>library(janitor)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;janitor&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     chisq.test, fisher.test</code></pre>
-<pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching packages ──────────────────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
-<pre><code>## ✓ ggplot2 3.2.1     ✓ purrr   0.3.3
-## ✓ tibble  2.1.3     ✓ dplyr   0.8.4
-## ✓ tidyr   1.0.2     ✓ stringr 1.4.0
-## ✓ readr   1.3.1     ✓ forcats 0.4.0</code></pre>
-<pre><code>## ── Conflicts ─────────────────────────────────────────────────────────── tidyverse_conflicts() ──
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()</code></pre>
-<pre class="r"><code>lichess &lt;- read.csv(&quot;data/games.csv&quot;) %&gt;% clean_names()
+<pre class="r"><code>## Loading Human vs. Human dataset
+
+lichess &lt;- read.csv(&quot;data/games.csv&quot;) %&gt;% clean_names()
+
+# Loading Computer vs. Computer dataset
+
 internet_c &lt;- read.csv(&quot;data//big_datasets/2016_CvC.csv&quot;) %&gt;% clean_names()
+
+# Loading Computer vs. Human dataset
+
 internet_h &lt;- read.csv(&quot;data/big_datasets/2016_CvH.csv&quot;) %&gt;% clean_names()
-internet &lt;- rbind(internet_c, internet_h)</code></pre>
+
+# Merging the internet datasets into one
+
+internet &lt;- rbind(internet_c, internet_h)
+
+# Splitting the strings in column &#39;moves&#39;
+
+test &lt;- str_split(internet$moves[1], &#39; &#39;)[[1]]
+
+# Removing the unnecessary move orders
+
+test2 &lt;- test[-seq(1, length(test), 3)]</code></pre>
 <p><strong>About</strong></p>
 <p>My name is Jason Yoo (Hwo Sun Yoo), and I am a junior in Leverett House studying Social Studies with a secondary in Statistics. In my later teenage years, I developed a bordering-unhealthy love of chess. Although I am not a great player, I have always been interested in studying the relationship between variables like opening moves, time spent, and differences in rating that might potentially affect the probability of winning a game of chess.</p>
 <p>For the project, I am using three different datasets. The first, named “lichess”, is a public dataset from the popular online chess site, Lichess. It contains games between humans, regardless of playing level. The second and third are datasets containing information about computer versus computer or computer versus human games of varying playing levels. I have combined these two datasets into one, and named it “internet.”</p>
