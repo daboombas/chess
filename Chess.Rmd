@@ -10,9 +10,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-lichess <- read.csv("data/games.csv")
-internet_c <- read.csv("data//big_datasets/2016_CvC.csv")
-internet_h <- read.csv("data/big_datasets/2016_CvH.csv")
+library(janitor)
+library(tidyverse)
+```
+```{r}
+lichess <- read.csv("data/games.csv") %>% clean_names()
+internet_c <- read.csv("data//big_datasets/2016_CvC.csv") %>% clean_names()
+internet_h <- read.csv("data/big_datasets/2016_CvH.csv") %>% clean_names()
 internet <- rbind(internet_c, internet_h)
 ```
 
