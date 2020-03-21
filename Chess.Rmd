@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(janitor)
 library(tidyverse)
+library(ggplot2)
 ```
 ```{r data}
 ## Loading Human vs. Human dataset
@@ -41,6 +42,10 @@ test <- str_split(internet$moves[1], ' ')[[1]]
 test2 <- test[-seq(1, length(test), 3)]
 ```
 
+```{r}
+internet %>% filter(!(result_winner == "Draw")) %>% ggplot(aes(result_winner, color = commentaries)) + geom_bar() + theme_minimal() + labs(title = "Wins According to Color") + xlab("Color") + ylab("Games Won")
+
+```
 **About**\n
 
 My name is Jason Yoo (Hwo Sun Yoo), and I am a junior in Leverett House studying Social Studies with a secondary in Statistics. In my later teenage years, I developed a bordering-unhealthy love of chess. Although I am not a great player, I have always been interested in studying the relationship between variables like opening moves, time spent, and differences in rating that might potentially affect the probability of winning a game of chess. 

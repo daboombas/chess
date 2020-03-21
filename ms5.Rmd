@@ -1,0 +1,31 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r libraries, include=FALSE}
+# Loading libraries
+
+library(janitor)
+library(tidyverse)
+library(ggplot2)
+```
+```{r data, include = FALSE}
+## Loading Human vs. Human dataset
+
+lichess <- read.csv("data/games.csv") %>% clean_names()
+
+# Loading Computer vs. Computer dataset
+
+internet_c <- read.csv("data//big_datasets/2016_CvC.csv") %>% clean_names()
+
+# Loading Computer vs. Human dataset
+
+internet_h <- read.csv("data/big_datasets/2016_CvH.csv") %>% clean_names()
+
+# Merging the internet datasets into one
+
+internet <- rbind(internet_c, internet_h)
+```
+```{r, echo = FALSE}
+internet %>% filter(!(result_winner == "Draw")) %>% ggplot(aes(result_winner, color = commentaries)) + geom_bar() + theme_minimal() + labs(title = "Wins According to Color") + xlab("Color") + ylab("Games Won")
+
+```
