@@ -1,0 +1,12 @@
+name: chess
+title: chess
+username:
+account: daboombas
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2055059
+bundleId: 2967115
+url: https://daboombas.shinyapps.io/chess/
+when: 1585969749.12109
+asMultiple: FALSE
+asStatic: FALSE

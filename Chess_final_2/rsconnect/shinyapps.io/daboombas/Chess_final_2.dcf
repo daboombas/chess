@@ -1,0 +1,13 @@
+name: Chess_final_2
+title: Chess_final_2
+username:
+account: daboombas
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2268373
+bundleId: 3122100
+url: https://daboombas.shinyapps.io/Chess_final_2/
+when: 1588968763.45122
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: uhm3.csv

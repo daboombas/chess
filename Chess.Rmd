@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(janitor)
 library(tidyverse)
 library(ggplot2)
+library(broom)
 ```
 ```{r data}
 ## Loading Human vs. Human dataset
@@ -43,9 +44,328 @@ test2 <- test[-seq(1, length(test), 3)]
 ```
 
 ```{r}
-internet %>% filter(!(result_winner == "Draw")) %>% ggplot(aes(result_winner, color = commentaries)) + geom_bar() + theme_minimal() + labs(title = "Wins According to Color") + xlab("Color") + ylab("Games Won")
+for (i in 1:129912){
+  test <- str_split(internet$moves[i], ' ')[[1]]
+  test2 <- list(test[-seq(1, length(test), 3)])
+  internet$new_moves[i] <- test2
+}
+for (i in 1:129912){
+  yes <- paste(sapply(internet$new_moves[i], paste), collapse=" ")
+  internet$realmoves[i] <- yes
+}
+```
+```{r}
+internet$turns <- round((internet$ply_count/2), digits = 0)
+internet$white_id <- internet$white
+internet$black_id <- internet$black
+internet$white_rating <- internet$white_elo
+internet$black_rating <- internet$black_elo
+internet$winner <- internet$result_winner
+internet$victory_status <- internet$commentaries
+lichess$realmoves <- lichess$moves
+```
+
+```{r}
+lichess$white_is_comp <- "no"
+lichess$black_is_comp <- "no"
+lichess$white <- lichess$white_id
+lichess$black <- lichess$black_id
+```
+```{r}
+lichess$turns <- as.numeric(lichess$turns)
+lichess$white_is_comp <- as.factor(lichess$white_is_comp)
+lichess$black_is_comp <- as.factor(lichess$black_is_comp)
+internet$victory_status <- as.factor(internet$victory_status)
+lichess$realmoves <- as.factor(lichess$realmoves)
+internet$castling <- 0
+internet$castling[grep('O-O', internet$moves)] <- 1
+internet$castling[grep('O-O-O', internet$moves)] <- 1
+lichess$castling <- 0
+lichess$castling[grep('O-O', lichess$moves)] <- 1
+lichess$castling[grep('O-O-O', lichess$moves)] <- 1
+lichess$white_is_comp <- 'no'
+lichess$black_is_comp <- 'no'
 
 ```
+
+```{r}
+new_internet <- internet %>% 
+  select(white_id, black_id, white_rating, black_rating, white_is_comp, black_is_comp, winner, victory_status, realmoves, castling)
+
+new_lichess <- lichess %>% 
+  select(white_id, black_id, white_rating, black_rating, white_is_comp, black_is_comp, winner, victory_status, realmoves, castling)
+```
+
+```{r}
+join <- rbind(new_internet, new_lichess)
+```
+
+```{r}
+join$op <- 1
+for (i in 1:149970){
+  join$op[i] <- substring(join$realmoves[i], 1, 3)
+}
+```
+```{r}
+join$victory_status <- gsub("Black checkmated", "mate", join$victory_status)
+join$victory_status <- gsub("Black forfeits by disconnection", "resigns", join$victory_status)
+join$victory_status <- gsub("Black forfeits on time", "outoftime", join$victory_status)
+join$victory_status <- gsub("Black resigns", "resigns", join$victory_status)
+join$victory_status <- gsub("Black wins by adjudication", "resigns", join$victory_status)
+join$victory_status <- gsub("White checkmated", "mate", join$victory_status)
+join$victory_status <- gsub("White forfeits by disconnection", "resigns", join$victory_status)
+join$victory_status <- gsub("White forfeits on time", "outoftime", join$victory_status)
+join$victory_status <- gsub("White resigns", "resigns", join$victory_status)
+join$victory_status <- gsub("White wins by adjudication", "resigns", join$victory_status)
+join$victory_status <- gsub("Game drawn by mutual agreement", "draw", join$victory_status)
+join$victory_status <- gsub("Game drawn by the 50 move rule", "draw", join$victory_status)
+join$victory_status <- gsub("Game drawn by repetition", "draw", join$victory_status)
+join$victory_status <- gsub("Game drawn by stalemate", "draw", join$victory_status)
+join$victory_status <- gsub("Neither player has mating material", "draw", join$victory_status)
+join$victory_status <- gsub("Black ran out of time and White has no material to mate", "draw", join$victory_status)
+join$victory_status <- gsub("White ran out of time and Black has no material to mate", "draw", join$victory_status)
+join$victory_status <- gsub("Game drawn by adjudication", "draw", join$victory_status)
+join$winner <- gsub("Black", "black", join$winner)
+join$winner <- gsub("Draw", "draw", join$winner)
+join$winner <- gsub("White", "white", join$winner)
+join$victory_status <- gsub("resigns", "resign", join$victory_status)
+join$white_is_comp <- gsub("Yes", "yes", join$white_is_comp)
+join$white_is_comp <- gsub("No", "no", join$white_is_comp)
+join$black_is_comp <- gsub("Yes", "yes", join$black_is_comp)
+join$black_is_comp <- gsub("No", "no", join$black_is_comp)
+join$op <- gsub("e4 ", "e4", join$op)
+join$op <- gsub("d4 ", "d4", join$op)
+join$op <- gsub("a4 ", "a4", join$op)
+join$op <- gsub("b4 ", "b4", join$op)
+join$op <- gsub("c4 ", "c4", join$op)
+join$op <- gsub("f4 ", "f4", join$op)
+join$op <- gsub("g4 ", "g4", join$op)
+join$op <- gsub("h4 ", "h4", join$op)
+join$op <- gsub("e3 ", "e3", join$op)
+join$op <- gsub("d3 ", "d3", join$op)
+join$op <- gsub("a3 ", "a3", join$op)
+join$op <- gsub("b3 ", "b3", join$op)
+join$op <- gsub("c3 ", "c3", join$op)
+join$op <- gsub("f3 ", "f3", join$op)
+join$op <- gsub("g3 ", "g3", join$op)
+join$op <- gsub("h3 ", "h3", join$op)
+write.csv(join, "Chess_final/join.csv")
+```
+```{r}
+ratings %>%
+  filter(white_is_comp == 'no') %>%
+  ggplot(aes(white_rating)) +
+  geom_density()
+join %>%
+  ggplot(aes(op, fill = winner)) +
+  geom_bar(position = "dodge") +
+  theme_classic()
+ggsave("openings.png")
+```
+```{r how games ended and what color won?}
+join <- read.csv("data/join.csv")
+join %>% 
+  filter(!(winner == "draw")) %>% 
+  ggplot(aes(winner, color = victory_status)) + 
+  geom_bar() + 
+  theme_minimal() + 
+  labs(title = "Wins According to Color") + 
+  xlab("Color") + 
+  ylab("Games Won")
+  
+internet %>% 
+  filter(!(result_winner == "Draw")) %>% 
+  ggplot(aes(result_winner, color = commentaries)) + 
+  geom_bar() + 
+  theme_minimal() + 
+  labs(title = "Wins According to Color") + 
+  xlab("Color") + 
+  ylab("Games Won")
+
+ggsave("wins_color.png")
+
+lichess %>%
+  filter(!(winner == "draw")) %>% 
+  ggplot(aes(winner, fill = victory_status)) + 
+  geom_bar() + 
+  theme_minimal() + 
+  labs(title = "Wins According to Color") + 
+  xlab("Color") + 
+  ylab("Games Won")
+
+ggsave("wins_color2.png")
+```
+
+```{r}
+join <- join %>%
+  mutate(difference = abs(white_rating - black_rating)) %>%
+  mutate(real_difference = white_rating - black_rating)
+```
+```{r}
+lm(turns~real_difference, data = join)
+join %>%
+  ggplot(aes(real_difference, turns, color = winner)) +
+  geom_point() +
+  theme_classic() +
+  ggtitle("Game Outcome Based on Rating Difference and Turns", subtitle = "More draws as rating difference approaches 0") +
+  xlab("Absolute Difference") +
+  ylab("Number of Turns") +
+  labs(color = "Color of Winner")
+ggsave("rating_winner.png")
+```
+```{r}
+humans <- join %>%
+  filter(white_is_comp == 'no', black_is_comp == 'no')
+computers <- join %>%
+  filter(white_is_comp == 'yes', black_is_comp == 'yes')
+lm(turns~difference, data = humans)
+lm(turns~difference, data = computers)
+
+# On average, difference is has greater effect when computers are playing against each. Higher differences mean higher rated computer will finish the game quicker. For humans, lower rated players can still make a comeback because both players are human.
+```
+
+```{r}
+# what about castling? Does castling have an effect on how quickly a game ends? If no castling, king is exposed.
+
+lm(turns~difference+castling, data = join)
+
+# Castling has a huge difference -- 60 move difference! So castling does protect your king.
+
+yes <- join %>%
+  
+  # Grouping by month
+  
+  group_by(winner) %>%
+  
+  # Nesting the data to organize
+  nest() %>%
+  
+  # Mutating a new variable, 'mod',
+  # that facets a logistic model
+  
+  mutate(mod = map(data, ~ lm(turns~real_difference + castling, data = .))) %>%
+  
+  # Mutating a new variable, 'reg_results',
+  # that tracks the tidy estimates
+  
+  mutate(reg_results = map(mod, ~ tidy(., conf.int = TRUE))) %>%
+  
+  # Mutating a coefficient for tweets
+  mutate(tweets_coefficient = 
+           map_dbl(reg_results, ~slice(., 2) %>% 
+                                 pull(estimate))) %>%
+  
+  # Mutating a standard error for tweets
+  
+  mutate(tweets_standard_error = 
+           map_dbl(reg_results, ~slice(., 2) %>% 
+                                    pull(std.error)),
+         
+         # Mutating a confidence interval for
+         # tweets
+         
+         tweets_conf.high = map_dbl(reg_results, ~slice(., 2) %>% 
+                               pull(conf.high)),
+         tweets_conf.low = map_dbl(reg_results, ~slice(., 2) %>% 
+                              pull(conf.low)),
+         
+         # Storing the upper bound
+         
+         tweets_upper = tweets_coefficient + 2 * tweets_standard_error, 
+         
+         # Storing the lower bound
+         
+         tweets_lower = tweets_coefficient - 2 * tweets_standard_error)
+yes %>% 
+  ggplot(aes(winner, tweets_coefficient)) +
+  geom_point() +
+  theme_classic() +
+  geom_errorbar(aes(x = winner, 
+                    ymin = tweets_lower, 
+                    ymax = tweets_upper), 
+                color = "light blue")
+
+no <- join %>%
+  
+  # Grouping by name
+  
+  group_by(winner) %>%
+  
+  # Mutating a new column, 'corr', that
+  # takes in the correlation between
+  # the variables according to year
+  
+  mutate(corr = cor(turns, castling)) %>%
+  
+  # Nesting the data to organize
+  # the variables into a tidier
+  # format
+  
+  nest() %>%
+  
+  # Mutating a new correlation variable
+  # that slices the value in each
+  # year and pulls out the 'corr' value
+  
+  mutate(correlation = map_dbl(data, ~slice(., 1) %>% 
+                             pull(corr))) %>%
+  
+  # Selecting the year and correlation
+  
+  select(winner, correlation)
+
+# Recreating a tibble
+
+tib <- tibble(winner = no$winner, 
+                correlation = no$correlation)
+
+# Calling a gt table
+
+tibbs <- tib %>%
+  gt() %>%
+  
+  # Inserting a title
+  
+  tab_header(title = "Correlation According to Winner")
+gtsave(data = tibbs, filename = "corr_winner2.png")
+```
+
+```{r}
+win_pct <- join %>%
+            filter(winner == "white") %>%
+            group_by(op) %>%
+            count()
+win_black <- join %>%
+            filter(winner == "black") %>%
+            group_by(op) %>%
+            count()
+win_draw <- join %>%
+            filter(winner == "draw") %>%
+            group_by(op) %>%
+            count()
+win_all <- join %>%
+            group_by(op) %>%
+            count()
+uhm <- merge(win_pct, win_black, by = "op")
+uhm2 <- merge(uhm, win_draw, by = "op")
+uhm3 <- merge(uhm2, win_all, by = "op")
+write.csv(uhm3, "Chess_final_2/uhm3.csv")
+
+```
+```{r}
+lm(turns ~ difference * castling, data = join) %>%
+  tidy(conf.int = TRUE) %>% 
+  
+  # Selecting the appropriate variables
+  
+  select(term, estimate, conf.low, conf.high) %>% 
+  
+  # Calling a gt table
+  
+  gt()
+```
+
+
 **About**\n
 
 My name is Jason Yoo (Hwo Sun Yoo), and I am a junior in Leverett House studying Social Studies with a secondary in Statistics. In my later teenage years, I developed a bordering-unhealthy love of chess. Although I am not a great player, I have always been interested in studying the relationship between variables like opening moves, time spent, and differences in rating that might potentially affect the probability of winning a game of chess. 
@@ -53,3 +373,22 @@ My name is Jason Yoo (Hwo Sun Yoo), and I am a junior in Leverett House studying
 For the project, I am using three different datasets. The first, named "lichess", is a public dataset from the popular online chess site, Lichess. It contains games between humans, regardless of playing level. The second and third are datasets containing information about computer versus computer or computer versus human games of varying playing levels. I have combined these two datasets into one, and named it "internet."
 
 Through these datasets, I hope to study the significance of opening moves, color, moves spent per game, and rating differences between players on the probability of winning.
+
+
+
+
+
+
+* white and black moves separated *
+allmoves <- str_split(lichess$moves, ' ')
+lichess <- lichess[lengths(allmoves) > 1, ]
+allmoves <- allmoves[lengths(allmoves) > 1]
+lichess$whitemoves <- lichess$blackmoves <- NA
+
+for(i in 1:length(allmoves)){
+  sub <- allmoves[[i]]
+  wm <- sub[seq(1, length(sub), 2)]
+  bm <- sub[seq(2, length(sub), 2)]
+  lichess$whitemoves[i] <- paste(wm, collapse = ' ')
+  lichess$blackmoves[i] <- paste(bm, collapse = ' ')
+}
